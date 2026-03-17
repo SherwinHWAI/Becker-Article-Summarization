@@ -79,12 +79,12 @@ TODAY_STR = datetime.now().strftime("%d%b%Y")
 
 # Create output folder inside project directory
 BASE_DIR = Path(__file__).resolve().parent
-OUT_DIR = BASE_DIR / f"OUTPUT_2026to{TODAY_STR}"
+OUT_DIR = BASE_DIR / f"OUTPUT"
 
 OUT_DIR.mkdir(exist_ok=True)
 
-OUT_CSV = OUT_DIR / f"listings_2022to{TODAY_STR}_merged.csv"
-DELTA_CSV = OUT_DIR / f"listings_2022to{TODAY_STR}_new_delta.csv"
+OUT_CSV = OUT_DIR / "stage1_master.csv"
+DELTA_CSV = OUT_DIR / "stage1_delta.csv"
 
 MAX_PAGES = 3000
 SLEEP_SEC = 4
