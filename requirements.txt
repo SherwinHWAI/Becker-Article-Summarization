@@ -2,7 +2,5 @@ pandas
 python-dateutil
 requests
 beautifulsoup4
-pathlib
-python-dotenv
 selenium
 webdriver-manager
