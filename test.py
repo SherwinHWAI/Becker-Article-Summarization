@@ -1,27 +1,38 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+import json
+import os
 
-# Use a reliable test website
+CHECKPOINT_FILE = "checkpoint.json"
+OUTPUT_FILE = "output.txt"
+
 url = "https://httpbin.org/html"
 
-try:
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()  # Raises error for bad status codes
+# Load checkpoint
+if os.path.exists(CHECKPOINT_FILE):
+    with open(CHECKPOINT_FILE, "r") as f:
+        checkpoint = json.load(f)
+else:
+    checkpoint = {"last_run": None}
 
-    soup = BeautifulSoup(response.text, "html.parser")
+print("Last run:", checkpoint["last_run"])
 
-    # This page has an <h1> tag
-    title = soup.find("h1").text.strip()
+# Scrape
+response = requests.get(url, timeout=10)
+soup = BeautifulSoup(response.text, "html.parser")
 
-    output = f"{datetime.now()} - {title}"
+title = soup.find("h1").text.strip()
+current_time = datetime.now().isoformat()
 
-    # Save output
-    with open("output.txt", "a") as f:
-        f.write(output + "\n")
+# Save output
+with open(OUTPUT_FILE, "a") as f:
+    f.write(f"{current_time} - {title}\n")
 
-    print("✅ Scraping successful:")
-    print(output)
+# Update checkpoint
+checkpoint["last_run"] = current_time
 
-except requests.exceptions.RequestException as e:
-    print("❌ Error occurred:", e)
+with open(CHECKPOINT_FILE, "w") as f:
+    json.dump(checkpoint, f, indent=2)
+
+print("✅ Done. Checkpoint updated.")
