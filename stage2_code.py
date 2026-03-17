@@ -44,7 +44,6 @@ BASE_DIR = Path(__file__).resolve().parent
 # INPUT folder contains Stage 1 delta file
 # OUTPUT_STAGE2 stores results
 
-INPUT_DIR = BASE_DIR / "INPUT"
 OUTPUT_DIR = BASE_DIR / "OUTPUT_STAGE2"
 
 INPUT_DIR.mkdir(exist_ok=True)
