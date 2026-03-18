@@ -79,7 +79,7 @@ TODAY_STR = datetime.now().strftime("%d%b%Y")
 
 # Create output folder inside project directory
 BASE_DIR = Path(__file__).resolve().parent
-OUT_DIR = BASE_DIR / f"OUTPUT"
+OUT_DIR = BASE_DIR / f"OUTPUT_STAGE1"
 
 OUT_DIR.mkdir(exist_ok=True)
 
