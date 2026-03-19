@@ -417,7 +417,9 @@ def main():
     t0 = time.time()
 
     watermark = date(2023, 1, 1)  # fallback
-
+    existing_urls = set()
+    merged = {}
+      
     if OUT_CSV.exists():
         print("[load] Loading existing master...")
         all_dates = []
@@ -447,9 +449,7 @@ def main():
             watermark = max(all_dates)
 
     print(f"[watermark] Incremental mode from {watermark}")
-    existing_urls = set()
-    merged = {}
-
+    
     if OUT_CSV.exists():
         print("[load] Loading existing master...")
         with open(OUT_CSV, newline="", encoding="utf-8-sig") as f:
