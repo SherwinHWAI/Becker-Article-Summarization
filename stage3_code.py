@@ -24,7 +24,7 @@ from typing import Dict, Any, Optional, List, Tuple
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
+from pathlib import Path
 import os
 
 from selenium import webdriver
@@ -37,14 +37,20 @@ from selenium.webdriver.support import expected_conditions as EC
 # ======================
 # CONFIG
 # ======================
-IN_CSV =  r"C:\Users\Renuka Kolusu\TEG Business Solutions Pvt Ltd\HWAI - TEG-HealthWorks\ProviderIntel\ProviderIntel Induction\Article_summarizer\OUT_PUT_2022tocurr\stage2_filtered_kept_delta.csv"
 
+BASE_DIR = Path(__file__).resolve().parent
+INPUT_DIR = BASE_DIR / "OUTPUT_STAGE2"
+OUTPUT_DIR = BASE_DIR / "OUTPUT_STAGE3"
 
-OUT_EXIT = r"C:\Users\Renuka Kolusu\TEG Business Solutions Pvt Ltd\HWAI - TEG-HealthWorks\ProviderIntel\ProviderIntel Induction\Article_summarizer\OUT_PUT_2022tocurr\stage3_exit_events.csv"
-OUT_CLOSURE = r"C:\Users\Renuka Kolusu\TEG Business Solutions Pvt Ltd\HWAI - TEG-HealthWorks\ProviderIntel\ProviderIntel Induction\Article_summarizer\OUT_PUT_2022tocurr\stage3_closure_events.csv"
-OUT_NO = r"C:\Users\Renuka Kolusu\TEG Business Solutions Pvt Ltd\HWAI - TEG-HealthWorks\ProviderIntel\ProviderIntel Induction\Article_summarizer\OUT_PUT_2022tocurr\stage3_no.csv"
-OUT_SKIPPED = r"C:\Users\Renuka Kolusu\TEG Business Solutions Pvt Ltd\HWAI - TEG-HealthWorks\ProviderIntel\ProviderIntel Induction\Article_summarizer\OUT_PUT_2022tocurr\stage3_skipped_run.csv"
-OUT_ERROR = r"C:\Users\Renuka Kolusu\TEG Business Solutions Pvt Ltd\HWAI - TEG-HealthWorks\ProviderIntel\ProviderIntel Induction\Article_summarizer\OUT_PUT_2022tocurr\stage3_error.csv"
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+IN_CSV = INPUT_DIR / "stage2_filtered_kept_delta.csv"
+
+OUT_EXIT = OUTPUT_DIR / "stage3_exit_events.csv"
+OUT_CLOSURE = OUTPUT_DIR / "stage3_closure_events.csv"
+OUT_NO = OUTPUT_DIR / "stage3_no.csv"
+OUT_SKIPPED = OUTPUT_DIR / "stage3_skipped_run.csv"
+OUT_ERROR = OUTPUT_DIR / "stage3_error.csv"
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 MODEL = os.getenv("MODEL")
@@ -63,6 +69,11 @@ OPENROUTER_API_KEY = OPENROUTER_API_KEY.strip()
 MODEL = MODEL.strip()
 OPENROUTER_URL = OPENROUTER_URL.strip()
 
+print("\n[DEBUG ENV]")
+print("API KEY:", "SET" if OPENROUTER_API_KEY else "MISSING")
+print("MODEL:", MODEL)
+print("URL:", OPENROUTER_URL)
+
 RERUN_SKIPPED_MODE = False
 RERUN_ERROR_MODE = False
 
@@ -77,7 +88,7 @@ MAX_CHARS = 9000
 REQUEST_TIMEOUT = 25
 SELENIUM_WAIT_SEC = 20
 
-SLEEP_SEC = 0.8
+SLEEP_SEC = 1.5
 MAX_LLM_RETRIES = 4
 BACKOFF_BASE_SEC = 2.0
 
@@ -255,6 +266,7 @@ def make_driver():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--disable-notifications")
+    options.binary_location = "/usr/bin/google-chrome"
     return webdriver.Chrome(options=options)
 
 
@@ -290,31 +302,33 @@ def fetch_article_text_selenium(url: str, driver) -> Tuple[str, Optional[str]]:
 
 
 def fetch_article_text(url: str, driver=None) -> Tuple[str, Optional[str]]:
-    if "beckershospitalreview.com/finance/" in url:
-        if driver is None:
-            return "", "No Selenium driver provided for finance URL"
-        return fetch_article_text_selenium(url, driver)
-
+    # First try requests
     try:
         r = requests.get(url, timeout=REQUEST_TIMEOUT, headers={"User-Agent": "Mozilla/5.0"})
-        if r.status_code != 200:
-            return "", f"HTTP {r.status_code}"
+        if r.status_code == 200:
+            soup = BeautifulSoup(r.text, "html.parser")
+            for tag in soup(["script", "style", "noscript", "svg"]):
+                tag.decompose()
 
-        soup = BeautifulSoup(r.text, "html.parser")
-        for tag in soup(["script", "style", "noscript", "svg"]):
-            tag.decompose()
+            container = (
+                soup.select_one("div.entry-main__content.entry-content")
+                or soup.select_one("div.entry-content")
+                or soup.select_one("article")
+            )
 
-        container = (
-            soup.select_one("div.entry-main__content.entry-content")
-            or soup.select_one("div.entry-content")
-            or soup.select_one("article")
-        )
+            text = container.get_text(" ", strip=True) if container else soup.get_text(" ", strip=True)
+            text = clean_ws(text)
 
-        text = container.get_text(" ", strip=True) if container else soup.get_text(" ", strip=True)
-        text = clean_ws(text)
-        return text[:MAX_CHARS], None
-    except Exception as e:
-        return "", f"{type(e).__name__}: {e}"
+            if len(text) > 100:
+                return text[:MAX_CHARS], None
+    except Exception:
+        pass
+
+    # Fallback to Selenium
+    if driver is not None:
+        return fetch_article_text_selenium(url, driver)
+
+    return "", "Failed both requests and Selenium"
 
 
 def safe_json_load(s: str) -> Optional[Dict[str, Any]]:
