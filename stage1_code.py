@@ -416,7 +416,37 @@ def add_to_merged(merged: Dict[Tuple[str, str], Dict[str, str]], it: Listing):
 def main():
     t0 = time.time()
 
-    watermark = DEFAULT_CUTOFF_DATE
+    watermark = date(2023, 1, 1)  # fallback
+
+    if OUT_CSV.exists():
+        print("[load] Loading existing master...")
+        all_dates = []
+
+        with open(OUT_CSV, newline="", encoding="utf-8-sig") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                urls = row["urls"].split(", ")
+                for u in urls:
+                    it = Listing(
+                        title=row["title"],
+                        url=u,
+                        published_dt=row["published_dt"],
+                        source=row["sources"],
+                        section=row["sections"],)
+                    add_to_merged(merged, it)
+                    existing_urls.add(u)
+
+                if row["published_dt"]:
+                    try:
+                        d = date_parser.parse(row["published_dt"]).date()
+                        all_dates.append(d)
+                    except:
+                        pass
+
+        if all_dates:
+            watermark = max(all_dates)
+
+    print(f"[watermark] Incremental mode from {watermark}")
     existing_urls = set()
     merged = {}
 
