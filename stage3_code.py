@@ -52,12 +52,15 @@ OUT_NO = OUTPUT_DIR / "stage3_no.csv"
 OUT_SKIPPED = OUTPUT_DIR / "stage3_skipped_run.csv"
 OUT_ERROR = OUTPUT_DIR / "stage3_error.csv"
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_API_KEY = "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"
+MODEL = "openai/gpt-4o-mini"
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+# MODEL = os.getenv("MODEL")
+# OPENROUTER_URL = os.getenv("OPENROUTER_URL")
 if not OPENROUTER_API_KEY:
     raise ValueError("Missing OPENROUTER_API_KEY in environment variables")
-
-MODEL = os.getenv("MODEL")
-OPENROUTER_URL = os.getenv("OPENROUTER_URL")
 
 RERUN_SKIPPED_MODE = False
 RERUN_ERROR_MODE = False
