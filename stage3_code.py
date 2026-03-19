@@ -46,16 +46,22 @@ OUT_NO = r"C:\Users\Renuka Kolusu\TEG Business Solutions Pvt Ltd\HWAI - TEG-Heal
 OUT_SKIPPED = r"C:\Users\Renuka Kolusu\TEG Business Solutions Pvt Ltd\HWAI - TEG-HealthWorks\ProviderIntel\ProviderIntel Induction\Article_summarizer\OUT_PUT_2022tocurr\stage3_skipped_run.csv"
 OUT_ERROR = r"C:\Users\Renuka Kolusu\TEG Business Solutions Pvt Ltd\HWAI - TEG-HealthWorks\ProviderIntel\ProviderIntel Induction\Article_summarizer\OUT_PUT_2022tocurr\stage3_error.csv"
 
-load_dotenv(
-    r"C:\Users\Renuka Kolusu\TEG Business Solutions Pvt Ltd\HWAI - TEG-HealthWorks\ProviderIntel\ProviderIntel Induction\Article_summarizer\Codes\.env"
-)
-
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-if not OPENROUTER_API_KEY:
-    raise ValueError("OPENROUTER_API_KEY not found in .env file")
-
 MODEL = os.getenv("MODEL")
 OPENROUTER_URL = os.getenv("OPENROUTER_URL")
+
+# Validate
+if not OPENROUTER_API_KEY:
+    raise ValueError("Missing OPENROUTER_API_KEY (GitHub Secret)")
+if not MODEL:
+    raise ValueError("Missing MODEL (GitHub Secret)")
+if not OPENROUTER_URL:
+    raise ValueError("Missing OPENROUTER_URL (GitHub Secret)")
+
+# CRITICAL: strip whitespace (fixes 401 issues)
+OPENROUTER_API_KEY = OPENROUTER_API_KEY.strip()
+MODEL = MODEL.strip()
+OPENROUTER_URL = OPENROUTER_URL.strip()
 
 RERUN_SKIPPED_MODE = False
 RERUN_ERROR_MODE = False
@@ -244,12 +250,11 @@ def get_url_from_row(row: pd.Series, df_cols: List[str]) -> str:
 
 def make_driver():
     options = Options()
-    # options.add_argument("--headless=new")  # keep off first
-    options.add_argument("--start-maximized")
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--disable-notifications")
+    options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--disable-notifications")
     return webdriver.Chrome(options=options)
 
 
