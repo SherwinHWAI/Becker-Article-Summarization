@@ -23,6 +23,12 @@ jobs:
       # Checkout repo
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Pull latest changes    
+      - name: Pull latest changes
+        run: git pull origin main
 
       # Setup Python
       - name: Set up Python
@@ -60,7 +66,7 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
 
-          git add OUTPUT_STAGE1/ OUTPUT_STAGE2/ OUTPUT_STAGE3/
+          git add -A
           git commit -m "Update pipeline outputs" || echo "No changes to commit"
 
           git push
