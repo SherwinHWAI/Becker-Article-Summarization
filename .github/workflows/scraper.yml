@@ -2,7 +2,7 @@ name: Weekly Automation Pipeline
 
 on:
   schedule:
-    - cron: "0 21 * * 5"   # Every Friday at 21:00 UTC
+    - cron: "0 21 * * 5"
   workflow_dispatch:
 
 permissions:
@@ -23,19 +23,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Ensure Python exists (safe fallback)
       - name: Check Python
-        run: |
-          python --version || echo "Python not found! Make sure it's installed on the runner."
+        run: python --version
 
-      # Install dependencies (only if requirements.txt exists)
-      # - name: Install Dependencies
-      #   run: |
-      #     if [ -f requirements.txt ]; then
-      #       pip install -r requirements.txt
-      #     else
-      #       echo "No requirements.txt found, skipping install."
-      #     fi
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
 
       - name: Run Stage 1
         run: python stage1_code.py
@@ -50,19 +42,7 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-
-          git add OUTPUT_STAGE1/ OUTPUT_STAGE2/ OUTPUT_STAGE3/ || true
-
-          changes=$(git status --porcelain)
-
-          if [ -n "$changes" ]; then
-            echo "Changes detected. Committing..."
-            git commit -m "Update pipeline outputs"
-
-            # Pull latest changes to avoid conflicts
-            git pull --rebase
-
-            git push
-          else
-            echo "No changes to commit."
-          fi
+          git add OUTPUT_STAGE1/ OUTPUT_STAGE2/ OUTPUT_STAGE3/
+          $changes = git status --porcelain
+          if ($changes) {git commit -m "Update pipeline outputs"}
+          git push
