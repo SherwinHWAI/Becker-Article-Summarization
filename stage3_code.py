@@ -265,7 +265,7 @@ def make_driver():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--disable-notifications")
-    options.binary_location = "/usr/bin/google-chrome"
+    options.binary_location = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
     return webdriver.Chrome(options=options)
 
 
