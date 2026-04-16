@@ -176,7 +176,6 @@ def get_domain_home(url: str) -> str:
     parsed = urlparse(url)
     return f"{parsed.scheme}://{parsed.netloc}/"
 
-
 # ============================
 # URL NORMALIZE
 # ============================
@@ -195,7 +194,6 @@ def clean_url(url: str) -> str:
 
 def normalize_url(base_url: str, href: str) -> str:
     return clean_url(urljoin(base_url, href))
-
 
 # ============================
 # TEXT NORMALIZATION
