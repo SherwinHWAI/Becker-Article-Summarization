@@ -606,6 +606,8 @@ def main():
 
             page = 1
             stop_section = False
+            consecutive_zero_new_pages = 0
+            MAX_CONSECUTIVE_ZERO = 5   # stop after 5 pages in a row with zero new articles
 
             while not stop_section and page <= MAX_PAGES:
                 if driver is None:
@@ -613,6 +615,7 @@ def main():
                     print("  [error] Selenium driver unavailable — skipping section")
                     break
 
+                _new_kept_before_page = section_stats[key]["new_kept"]
                 html, err, used_url = fetch_page_candidates_selenium(driver, base_url, page)
 
                 if not html:
@@ -656,8 +659,11 @@ def main():
                     resolved_items.append((title, url, pub))
 
                 if page_all_have_dates and page_dates:
+                    oldest_on_page = min(page_dates)
                     newest_on_page = max(page_dates)
-                    if newest_on_page < watermark:
+                    # Stop if the OLDEST article on this page predates the watermark
+                    # (all subsequent pages will be even older)
+                    if oldest_on_page < watermark and newest_on_page < watermark:
                         stop_section = True
 
                 for title, url, pub in resolved_items:
@@ -692,6 +698,19 @@ def main():
 
                     section_stats[key]["new_kept"] += 1
                     new_kept_total += 1
+
+                # Consecutive-zero-new-pages guard
+                # If no new articles were found on this page AND most articles are old,
+                # increment the counter. Reset it if new articles were found.
+                new_kept_after = section_stats[key]["new_kept"]
+                new_this_page = new_kept_after - _new_kept_before_page
+                if new_this_page == 0:
+                    consecutive_zero_new_pages += 1
+                    if consecutive_zero_new_pages >= MAX_CONSECUTIVE_ZERO:
+                        print(f"  [early-stop] {consecutive_zero_new_pages} consecutive pages with zero new articles — stopping section")
+                        stop_section = True
+                else:
+                    consecutive_zero_new_pages = 0
 
                 page += 1
                 time.sleep(SLEEP_SEC)
