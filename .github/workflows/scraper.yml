@@ -29,14 +29,17 @@ jobs:
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Stage 1
-        run: python stage1_code.py
+      # - name: Run Stage 1
+      #   run: python stage1_code.py
 
-      - name: Run Stage 2
-        run: python stage2_code.py
+      # - name: Run Stage 2
+      #   run: python stage2_code.py
 
-      - name: Run Stage 3
-        run: python stage3_code.py
+      # - name: Run Stage 3
+      #   run: python stage3_code.py
+
+      - name: Run Test
+        run: python test.py
 
       - name: Commit and Push Outputs
         run: |
